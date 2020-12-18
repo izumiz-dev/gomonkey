@@ -1,11 +1,14 @@
 package lexer
 
-import "monkey/token"
+import (
+    "monkey/token"
+    "fmt"
+)
 
 type Lexer struct {
 	input           string
 	position        int // 入力における現在の位置
-	readPosition 	int // 現在の次の文字
+	readPosition    int // 現在の次の文字
 	ch              byte // 現在検査中の文字
 }
 
@@ -23,6 +26,7 @@ func (l *Lexer) readChar() {
     } else {
         // 最後の文字に到達していない場合の条件
         // l.chに次の文字を代入する（セットしている）
+        fmt.Printf("%c\n", l.ch)
         l.ch = l.input[l.readPosition]
     }
     // l.postionは常に最後に読んだ場所を指す
@@ -60,6 +64,10 @@ func (l *Lexer) NextToken() token.Token {
             tok.Literal = l.readIdentifier()
             tok.Type = token.LookupIdent(tok.Literal)
             return tok
+        } else if isDigit(l.ch) {
+            tok.Type = token.INT
+            tok.Literal = l.readNumber()
+            return tok
         } else {
             tok = newToken(token.ILLEGAL, l.ch)
         }
@@ -87,7 +95,19 @@ func isLetter(ch byte) bool {
 }
 
 func (l *Lexer) skipWhiteSpace() {
-    for l.ch == ' ' || l.ch == '\n' || l.ch == '\r' {
+    for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
         l.readChar()
     }
+}
+
+func (l *Lexer) readNumber() string {
+    position := l.position
+    for isDigit(l.ch) {
+        l.readChar()
+    }
+    return l.input[position:l.position]
+}
+
+func isDigit(ch byte) bool {
+    return '0' <= ch && ch <= '9'
 }
